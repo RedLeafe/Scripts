@@ -1,0 +1,181 @@
+#!/bin/bash
+
+export PATH="$HOME/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/sbin:/usr/bin:/bin:/usr/local/games:/usr/games"
+
+chr=/bruh/lol
+
+
+# install vsftpd server
+if ! which vsftpd > /dev/null; then
+   echo -e "Command not found! Install? (y/n) \c"
+   read REPLY
+   if [ "$REPLY" = "y" ]; then
+  	apt install openssh-server -y
+   fi
+fi
+echo "==== finished installing openssh"
+systemctl enable sshd
+systemctl start sshd
+systemctl status sshd
+
+# install vsftpd server
+if ! which vsftpd > /dev/null; then
+   echo -e "Command not found! Install? (y/n) \c"
+   read REPLY
+   if [ "$REPLY" = "y" ]; then
+  	apt-get install vsftpd -y
+   fi
+fi
+echo "==== finished installing vsftpd"
+
+# install ftp client
+if ! which ftp > /dev/null; then
+   echo -e "Command not found! Install? (y/n) \c"
+   read REPLY
+   if [ "$REPLY" = "y" ]; then
+  	apt-get install ftp -y
+   fi
+fi
+echo "==== finished installing ftp"
+
+# backup original first
+cp /etc/vsftpd.conf > /root/vsftpd.conf.bak
+# replace with working ftp config
+echo "listen=NO" > /etc/vsftpd.conf
+echo "listen_ipv6=YES" >> /etc/vsftpd.conf
+echo "anonymous_enable=NO" >> /etc/vsftpd.conf
+echo "local_enable=YES" >> /etc/vsftpd.conf
+echo "write_enable=YES" >> /etc/vsftpd.conf
+echo "local_umask=022" >> /etc/vsftpd.conf
+echo "dirmessage_enable=YES" >> /etc/vsftpd.conf
+echo "use_localtime=YES" >> /etc/vsftpd.conf
+echo "xferlog_enable=YES" >> /etc/vsftpd.conf
+echo "connect_from_port_20=YES" >> /etc/vsftpd.conf
+echo "chroot_local_user=YES" >> /etc/vsftpd.conf
+echo "allow_writeable_chroot=YES" >> /etc/vsftpd.conf
+echo "secure_chroot_dir=/var/run/vsftpd/empty" >> /etc/vsftpd.conf
+echo "pam_service_name=vsftp" >> /etc/vsftpd.conf
+echo "rsa_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem" >> /etc/vsftpd.conf
+echo "rsa_private_key_file=/etc/ssl/private/ssl-cert-snakeoil.key" >> /etc/vsftpd.conf
+echo "ssl_enable=NO" >> /etc/vsftpd.conf
+echo "local_root=/bruh/lol" >> /etc/vsftpd.conf
+echo "pasv_enable=YES" >> /etc/vsftpd.conf
+echo "pasv_min_port=10000" >> /etc/vsftpd.conf
+echo "pasv_max_port=10100" >> /etc/vsftpd.conf
+systemctl enable vsftpd
+systemctl restart vsftpd
+systemctl status vsftpd
+
+# create group jail
+groupadd jail
+
+echo "==== finished creating jail group"
+# assign folder /mnt/files to
+#chgrp jail /bruh/lol/mnt/files
+#chown jail:jail /bruh/lol/mnt/files
+#chmod 755 /bruh/lol/mnt/files
+#chmod g+rw /bruh/lol/mnt/files
+
+mkdir -pv $chr
+chown -v root:root $chr
+mkdir -pv $chr/{bin,lib,lib64,dev,mnt}
+cp -v --parents /etc/{passwd,group} $chr
+chmod 600 $chr/etc/{passwd,group}
+MYDIR=/bruh/lol/mnt/files
+
+# check if folder exists
+if [ ! -d $MYDIR ]; then
+	mkdir $MYDIR
+	echo "Created the $MYDIR!"
+else
+	echo "$MYDIR already exists skipping"
+fi
+
+# make all bin files
+for i in {1..18}; do
+	touch $MYDIR/$i.bin
+	# echo $MYDIR/$i.bin
+done
+
+for i in {1..3}; do
+	touch $MYDIR/data_dump$i.bin
+	# echo $MYDIR/data_dump$i.bin
+done
+
+touch $MYDIR/datadump.bin
+# echo $MYDIR/datadump.bin
+echo "==== Created all $MYDIR directories and folders"
+
+names=("khanmigo" "myai" "tabcomplete" "gpt" "cortana" "codewhisperer" "claude" "musico" "chatbot" "codeium" "tabnine" "copilot" "watson" "tensorflow" "bard" "pytorch" "caffe2" "midjourney" "dalle" "llama" "theano" "aiva" "siri")
+
+# loop through names
+for i in "${names[@]}"; do
+	#if id "$i" &>/dev/null; then
+	#	echo "User $i already exists, skipping..."
+	#else
+	useradd -m -s /bin/bash "$i" # Create user with home directory and bash shell
+	echo -e "1234\n1234" | passwd $i
+	usermod -aG jail "$i"     	# Add user to the jail group
+	echo "User $i created successfully."
+	mkdir -pv $chr/home/"$i"
+	mkdir -pv /home/"$i"
+	chmod -Rv 770 $chr/home/"$i"
+chown -Rv "$i":"$i" $chr/home/"$i"
+chmod -Rv 770 /home/"$i"
+chown -Rv "$i":"$i" /home/"$i"
+
+	#fi
+done
+
+#creates dependencies
+mknod -m 600 $chr/dev/null c 1 3
+mknod -m 600 $chr/dev/random c 1 8
+mknod -m 600 $chr/dev/tty c 5 0
+mknod -m 600 $chr/dev/zero c 1 5
+ln -sv /proc/self/fd/2 $chr/dev/stderr
+ln -sv /proc/self/fd/0 $chr/dev/stdin
+ln -sv /proc/self/fd/1 $chr/dev/stdout
+cp -v /bin/{bash,ls,cat} $chr/bin
+dlist="$(ldd /bin/{bash,ls} | egrep -o '/lib.*\.[0-9]')"
+for i in $dlist; do cp -v --parents "$i" "${chr}"; done
+
+echo "==== finished creating users and adding to jail group"
+grep 'jail' /etc/group
+
+# give jail group permission to /bruh/lol/mnt
+
+chown -R root:jail /bruh/lol/mnt/files
+chmod -R g+w /bruh/lol/mnt/files
+#copies the ssh public key to all users
+#for i in ${names[@]}; do
+#ssh-copy-id -i ~/.ssh/key "$i"@<ip>
+#done
+
+
+#copies the ssh public key to all users
+for i in ${names[@]}; do
+ssh-copy-id -i ~/.ssh/key "$i"@localhost
+done
+
+echo "Include /etc/ssh/sshd_config.d/*.conf" > /etc/ssh/sshd_config
+echo "LoginGraceTime 30" >> /etc/ssh/sshd_config
+echo "PermitRootLogin no" >> /etc/ssh/sshd_config
+echo "StrictModes yes" >> /etc/ssh/sshd_config
+echo "MaxAuthTries 3" >> /etc/ssh/sshd_config
+echo "MaxSessions 2" >> /etc/ssh/sshd_config
+echo "PubkeyAuthentication yes" >> /etc/ssh/sshd_config
+echo "PasswordAuthentication no" >> /etc/ssh/sshd_config
+echo "PermitEmptyPasswords no" >> /etc/ssh/sshd_config
+echo "ChallengeResponseAuthentication no" >> /etc/ssh/sshd_config
+echo "UsePAM yes" >> /etc/ssh/sshd_config
+echo "X11Forwarding no" >> /etc/ssh/sshd_config
+echo "PrintMotd no" >> /etc/ssh/sshd_config
+echo "UseDNS no" >> /etc/ssh/sshd_config
+echo "PermitTunnel no" >> /etc/ssh/sshd_config
+echo "AcceptEnv LANG LC_*" >> /etc/ssh/sshd_config
+echo "Subsystem   sftp /usr/lib/openssh/sftp-server" >> /etc/ssh/sshd_config
+echo "Match group jail" >> /etc/ssh/sshd_config
+echo " 	ChrootDirectory /bruh/lol/" >> /etc/ssh/sshd_config
+
+systemctl restart sshd
+
