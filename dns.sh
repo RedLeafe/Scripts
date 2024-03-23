@@ -9,11 +9,12 @@ localConfig=/etc/bind/named.conf.local
 
 if [ ! -d /etc/bind/zones ]; then
         mkdir /etc/bind/zones
-        cp /etc/bind/db.empty /etc/bind/zones/forward.ncaecybergames.org
-        cp /etc/bind/db.empty /etc/bind/zones/reverse.ncaecybergames.org
-        cp /etc/bind/db.empty /etc/bind/zones/forward.team.net
-        cp /etc/bind/db.empty /etc/bind/zones/reverse.team.net
 fi
+
+cp /etc/bind/db.empty /etc/bind/zones/forward.ncaecybergames.org
+cp /etc/bind/db.empty /etc/bind/zones/reverse.ncaecybergames.org
+cp /etc/bind/db.empty /etc/bind/zones/forward.team.net
+cp /etc/bind/db.empty /etc/bind/zones/reverse.team.net
 
 cat << done > $localConfig
 zone "team$team.ncaecybergames.org" IN {
@@ -64,10 +65,10 @@ cat << done > /etc/bind/zones/reverse.ncaecybergames.org
                           86400 )       ; Negative Cache TTL
 ;
 @       IN      NS      $name.
-$team.14        IN      PTR     ns1.team$team.ncaecybergames.org.
-$team.14        IN      PTR     www.team$team.ncaecybergames.org.
-$team.13        IN      PTR     files.team$team.ncaecybergames.org.
-$team.13        IN      PTR     shell.team$team.ncaecybergames.org.
+$team.13        IN      PTR     ns1.team$team.ncaecybergames.org.
+$team.13        IN      PTR     www.team$team.ncaecybergames.org.
+$team.14        IN      PTR     files.team$team.ncaecybergames.org.
+$team.14        IN      PTR     shell.team$team.ncaecybergames.org.
 done
 
 cat << done > /etc/bind/zones/forward.team.net
@@ -81,9 +82,9 @@ cat << done > /etc/bind/zones/forward.team.net
 ;
 @       IN      NS      $name
 $name   IN      A       $ip
-ns1     IN      A       192.168.$team.7
-www     IN      A       192.168.$team.12
-db1     IN      A       192.168.$team.5
+ns1     IN      A       192.168.$team.12
+www     IN      A       192.168.$team.5
+db1     IN      A       192.168.$team.7
 done
 
 cat << done > /etc/bind/zones/reverse.team.net
@@ -97,21 +98,9 @@ cat << done > /etc/bind/zones/reverse.team.net
 ;
 @       IN      NS      $name.
 12      IN      PTR     ns1.team$team.net.
-7       IN      PTR     db1.team$team.net
+7       IN      PTR     db1.team$team.net.
 5       IN      PTR     www.team$team.net.
 done
 
-sed -i "s/.*nameserver\>.*/nameserver $ip/" /etc/resolv.conf
-mv /etc/bind/ /dev/null
-
 systemctl restart named
 systemctl status named
-
-echo -e "\n\n nslookup www.team$team.net:"
-nslookup www.team$team.net
-echo -e "\n nslookup www.team$team.ncaecybergames.org: "
-nslookup www.team$team.ncaecybergames.org
-echo -e "\n nslookup 192.168.$team.12: "
-nslookup 192.168.$team.12
-echo -e "\n nslookup 172.18.13.$team: "
-nslookup 172.18.13.$team
