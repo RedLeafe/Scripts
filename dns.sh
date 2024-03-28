@@ -5,8 +5,6 @@ read -p "Host Name: " name
 read -p "Ip: " ip
 read -p "How many times have you run this: " serial
 
-localConfig=/etc/bind/named.conf.local
-
 cp -rp /etc/bind /root/bind_backup.d
 
 if [ ! -d /etc/bind/zones ]; then
@@ -18,7 +16,7 @@ cp /etc/bind/db.empty /etc/bind/zones/reverse.ncaecybergames.org
 cp /etc/bind/db.empty /etc/bind/zones/forward.team.net
 cp /etc/bind/db.empty /etc/bind/zones/reverse.team.net
 
-cat << done > $localConfig
+cat << done > /etc/bind/named.conf.local
 zone "team$team.ncaecybergames.org" IN {
         type master;
         file "/etc/bind/zones/forward.ncaecybergames.org";
