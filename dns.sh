@@ -7,7 +7,7 @@ read -p "How many times have you run this: " serial
 
 localConfig=/etc/bind/named.conf.local
 
-cp /etc/bind /root/bind_backup.d
+cp -rp /etc/bind /root/bind_backup.d
 
 if [ ! -d /etc/bind/zones ]; then
         mkdir /etc/bind/zones
