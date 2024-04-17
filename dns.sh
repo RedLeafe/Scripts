@@ -1,5 +1,5 @@
 #!/bin/bash
-# bruh
+
 read -p "Team Number: " team
 read -p "Host Name: " name
 read -p "Ip: " ip
